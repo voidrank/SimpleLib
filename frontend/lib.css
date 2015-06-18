@@ -28,6 +28,43 @@ body {
     font: 1.4rem/1.4 "chaparral-pro", "Helvetica Neue", sans-serif;
 }
 
+@-webkit-keyframes maskFadeIn { from { opacity:0; } to { opacity:0.3; } }
+@-moz-keyframes maskFadeIn { from { opacity:0; } to { opacity:0.3; } }
+@keyframes maskFadeIn { from { opacity:0; } to { opacity:0.3; } }
+@-webkit-keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+@-moz-keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+.fade-in {
+    opacity:0;  /* make things invisible upon start */
+    -webkit-animation:fadeIn ease-in 1;  /* call our keyframe named fadeIn, use animattion ease-in and repeat it only 1 time */
+    -moz-animation:fadeIn ease-in 1;
+    animation:fadeIn ease-in 1;
+
+    -webkit-animation-fill-mode:forwards;  /* this makes sure that after animation is done we remain at the last keyframe value (opacity: 1)*/
+    -moz-animation-fill-mode:forwards;
+    animation-fill-mode:forwards;
+
+    -webkit-animation-duration:0.2s;
+    -moz-animation-duration:0.2s;
+    animation-duration:0.2s;
+}
+
+.mask-fade-in {
+    opacity:0;  /* make things invisible upon start */
+    -webkit-animation: maskFadeIn ease-in 1;  /* call our keyframe named fadeIn, use animattion ease-in and repeat it only 1 time */
+    -moz-animation: maskFadeIn ease-in 1;
+    animation: maskFadeIn ease-in 1;
+
+    -webkit-animation-fill-mode:forwards;  /* this makes sure that after animation is done we remain at the last keyframe value (opacity: 1)*/
+    -moz-animation-fill-mode:forwards;
+    animation-fill-mode:forwards;
+
+    -webkit-animation-duration:0.2s;
+    -moz-animation-duration:0.2s;
+    animation-duration:0.2s;
+}
+
 .login-register {
 
     width: 12em;
@@ -66,14 +103,31 @@ body {
 
 .login-register #registerButton {
 
+    border-radius: 0.3em;
+    border: 1px solid #cfcfcf;
+
+    cursor: pointer;
     display: inline-flex;
+    width: 5em;
+
+    outline: 0;
+    background-color: #dfdfdf;
+    background-image: linear-gradient(#ffffff, #dfdfdf);
 
     justify-content: center;
     align-items: center;
+    font-size: small;
+    font-weight: 600;
+    color: #000;
+
+}
+
+.login-register #registerButton:hover {
+    background-image: linear-gradient(#dfdfdf, #dfdfdf);
 }
 
 .mask {
-    position: absolute;
+    position: fixed;
     top: 0;
     z-index: 1;
 
@@ -84,10 +138,10 @@ body {
 
 }
 
-.login {
+.login,.register {
 
-    position: absolute;
-    margin:auto;
+    position: fixed;
+    margin: auto;
     top: 10em;
     left: 0;
     right: 0;
@@ -101,34 +155,45 @@ body {
     opacity: 1;
 
     display: flex;
-    padding: 2em 7em 5em 7em;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-around;
     flex-flow: column;
 }
 
-.login >input {
+.login,.register .closelabel {
+    align-self: flex-end;
+    margin-right: 1em;
+    cursor: pointer;
+    opacity: 0.5;
+}
+
+.login,.register .closelabel:hover {
+    opacity: 1;
+}
+
+.login,.register >input {
+
 
     border-radius: 0.5em;
 
-    display: flex;
     border: 1px solid #e7e7e7;
+    display: flex;
 
-    width: 100%;
+    width: 50%;
     height: 3em;
     padding: 0 1em 0 1em;
-    font-size: 1.5em;
     background-color: #e7e7e7;
     background-image: url('./media/ban.png');
 }
 
-.login .submit {
+.login,.register .submit {
 
     align-self: flex-end;
 
     width: 5em;
     height: 2em;
 
+    margin-right: 8em;
     border-radius: 0.3em;
     border: 1px solid #60b044;
     outline: 0;
@@ -144,11 +209,11 @@ body {
     color: #fff;
 }
 
-.login .submit:hover {
+.login,.register .submit:hover {
     background-image: linear-gradient(#60b044, #60b044);
 }
 
-.login .text {
+.login,.register .text {
 
     width: 100%;
     height: 2em;
@@ -157,6 +222,10 @@ body {
     vertical-align: middle;
     font-weight: 700;
     font-size: 1.5em;
+
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
 }
 
 

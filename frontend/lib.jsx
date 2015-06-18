@@ -19,7 +19,7 @@ var LoginWidget = React.createClass({
         $(MessageListener).on("activateLogin", function(){
             $(".mask").removeClass("hidden");
             $(".mask").addClass("mask-fade-in");
-            this.setState({display: "fadeIn"});
+            this.setState({display: "fade-in"});
         }.bind(this));
         $(MessageListener).on("deactivateLogin", function(){
             $(".mask").removeClass("mask-fade-in");
@@ -87,7 +87,7 @@ var RegisterWidget = React.createClass({
         $(MessageListener).on("activateRegister", function(){
             $(".mask").removeClass("hidden");
             $(".mask").addClass("mask-fade-in");
-            this.setState({display: "fadeIn"});
+            this.setState({display: "fade-in"});
         }.bind(this));
         $(MessageListener).on("deactivateRegister", function(){
             $(".mask").removeClass("mask-fade-in");
