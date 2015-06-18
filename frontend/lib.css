@@ -1,0 +1,320 @@
+input {
+    outline: 0;
+}
+
+a:link {
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: none;
+}
+
+a:visited {
+    text-decoration: none;
+}
+
+button {
+    outline: 0;
+}
+
+ul {
+    padding-left: 0;
+}
+
+body {
+    background-color: #F0EFEE;
+    background-image: url('./media/ban.png');
+    font: 1.4rem/1.4 "chaparral-pro", "Helvetica Neue", sans-serif;
+}
+
+.login-register {
+
+    width: 12em;
+    height: 2.2em;
+    align-self: center;
+    right: 1em;
+
+    display: flex;
+    justify-content: space-around;
+}
+
+.login-register #loginButton {
+
+    border-radius: 0.3em;
+    border: 1px solid #60b044;
+
+    cursor: pointer;
+    display: inline-flex;
+    width: 5em;
+
+    outline: 0;
+    background-color: #8add6d;
+    background-image: linear-gradient(#8add6d, #60b044);
+
+    justify-content: center;
+    align-items: center;
+    font-size: small;
+    font-weight: 600;
+    color: #fff;
+
+}
+
+.login-register #loginButton:hover {
+    background-image: linear-gradient(#60b044, #60b044);
+}
+
+.login-register #registerButton {
+
+    display: inline-flex;
+
+    justify-content: center;
+    align-items: center;
+}
+
+.mask {
+    position: absolute;
+    top: 0;
+    z-index: 1;
+
+    background-color: #000;
+    opacity: 0.5;
+    height: 100%;
+    width: 100%;
+
+}
+
+.login {
+
+    position: absolute;
+    margin:auto;
+    top: 10em;
+    left: 0;
+    right: 0;
+    z-index: 10;
+
+    border-radius: 0.5em;
+    box-shadow: 1px 0px 3px #E7E4E4;
+    background-color: #fff;
+    height: 20em;
+    width: 30em;
+    opacity: 1;
+
+    display: flex;
+    padding: 2em 7em 5em 7em;
+    align-items: flex-start;
+    justify-content: space-around;
+    flex-flow: column;
+}
+
+.login >input {
+
+    border-radius: 0.5em;
+
+    display: flex;
+    border: 1px solid #e7e7e7;
+
+    width: 100%;
+    height: 3em;
+    padding: 0 1em 0 1em;
+    font-size: 1.5em;
+    background-color: #e7e7e7;
+    background-image: url('./media/ban.png');
+}
+
+.login .submit {
+
+    align-self: flex-end;
+
+    width: 5em;
+    height: 2em;
+
+    border-radius: 0.3em;
+    border: 1px solid #60b044;
+    outline: 0;
+    background-color: #8add6d;
+    background-image: linear-gradient(#8add6d, #60b044);
+    cursor: pointer;
+
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+
+    font-weight: 500;
+    color: #fff;
+}
+
+.login .submit:hover {
+    background-image: linear-gradient(#60b044, #60b044);
+}
+
+.login .text {
+
+    width: 100%;
+    height: 2em;
+
+    text-align: center;
+    vertical-align: middle;
+    font-weight: 700;
+    font-size: 1.5em;
+}
+
+
+.header {
+    position: fixed;
+    width: 100%;
+    height: 7em;
+    background-color: #fff;
+    border: 1px solid #e7e700;
+
+
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-around;
+    z-index: 1000;
+}
+
+.header .search-bar {
+
+    display: -webkit-flex;
+    display: flex;
+
+    width: 20em;
+    height: 2.5em;
+    background-color: #F7F6F6;
+    align-self: center;
+    justify-self: center;
+    -webkit-align-self: center;
+
+    border-radius: 1em;
+    border: 1px solid #E7E7E7;
+
+    -webkit-align-items: center;
+    padding: 0em 0.5em 0em 0.5em;
+}
+
+.header .logo {
+
+    display: flex;
+
+    margin-left: 0.3em;
+    margin-right: 2em;
+
+    justify-content: center;
+    justify-self: center;
+    align-self: center;
+
+    font-weight: 900;
+    font-size: 2em;
+}
+
+.display-board {
+    z-index: 0;
+
+    width: 100%
+
+display: -webkit-flex;
+    display: flex;
+    padding: 8em 11em 0em 10em;
+}
+
+@media (max-width: 600px) {
+    .display-board {
+        padding: 8em 0 0 0;
+    }
+}
+
+@media (max-width: 400px) {
+    .book {
+        float: left;
+        width: 100%;
+    }
+}
+
+@media (max-width: 1100px) and (min-width: 800px) {
+    .book {
+        float: left;
+        width: 50%;
+    }
+}
+
+@media (min-width: 1100px) {
+    .book {
+        float: left;
+        width: 33.3%;
+    }
+}
+
+
+.display-board .book {
+
+    display: -webkit-flex;
+    display: flex;
+
+    flex-direction: column;
+
+    padding: 0 1em 2em 1em;
+    border: 0 solid #fff;
+}
+
+.display-board .borrow {
+    height: inherit;
+    width: 5em;
+    font-size: inherit;
+    cursor: pointer;
+    font-weight: inherit;
+}
+
+.display-board .return {
+    height: inherit;
+    width: 5em;
+    font-size: inherit;
+    cursor: pointer;
+    font-weight: inherit;
+}
+
+.display-board .book .book-title {
+    padding: 0.5em 0 0 0;
+    border-top-color: #e7e7e7;
+    border-width: 1px 0 0 0;
+    border-style: solid;
+
+    width: 100%;
+    background-color: #fff;
+
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+
+    font-weight: 700;
+
+    display: -webkit-flex;
+    display: flex;
+}
+
+.display-board .book .book-title .book-name {
+    padding: 0.5em 0 0 0.5em;
+}
+
+.display-board .book .book-description {
+    padding: 0em 2em 0.5em 2em;
+    width: 100%;
+    background-color: #fff;
+
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+
+    color: #B7B5B5;
+
+    display: -webkit-flex;
+    display: flex;
+}
+
+.display-board .book .book-image {
+    width: 100%;
+    height: auto
+}
