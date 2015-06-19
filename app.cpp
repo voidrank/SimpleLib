@@ -2,6 +2,8 @@
 #include <map>
 #include <string>
 #include <sstream>
+#include <cstdlib>
+#include <cstdio>
 
 // for random string
 #include <boost/random/random_device.hpp>
@@ -68,7 +70,8 @@ namespace CookieManager {
         template<typename AllContext>
         void after_handle(crow::request &req, crow::response &res, context &ctx, AllContext all_ctx) {
             // this is a hack
-            res.set_header("Access-Control-Allow-Origin", "*");
+            res.add_header("Access-Control-Allow-Origin", "http://localhost:63343");
+            res.add_header("Access-Control-Allow-Credentials", "true");
         }
     };
 };
@@ -207,9 +210,8 @@ namespace UserManager {
             if (username == "") {
                 cerr << "UserManagerMiddleware: username not set" << endl;
                 ctx.set_user(AnonymousUser);
-                session_manager_middleware.set_value("username", crow::json::load(username));
             }
-                // check if username is in user manager
+            // check if username is in user manager
             else {
                 auto me = users.find(username);
                 // found
@@ -233,24 +235,107 @@ namespace UserManager {
 
 }
 
+namespace BorrowAndReturn {
+    typedef std::unordered_map<int, bool> relation;
+    std::unordered_map<string, relation> relations;
+    // {username: {index: bool(1 means book is borrowed, 0 means book is returned)}}
+}
+
 namespace Library {
 
     std::vector<crow::json::wvalue> Books;
+    int primary_key_count;
 
-    std::string load(const std::string& key) {
-        std::string ret = "[";
-        for (auto&& i: Books) {
-            auto name = crow::json::dump(i["name"]);
-            name = name.substr(1, name.length() - 2);
-            cerr << "this" << endl;
+    crow::json::wvalue load(const std::string& key, const std::string& username) {
+
+        using crow::json::dump;
+        using crow::json::load;
+
+        auto ret = crow::json::wvalue();
+        auto count = 0;
+        cerr << username << endl;
+        auto p_rel = BorrowAndReturn::relations.find(username);
+
+        if (p_rel == BorrowAndReturn::relations.end()){
+            p_rel = BorrowAndReturn::relations.emplace(username, BorrowAndReturn::relation()).first;
+            cerr << "not found" << endl;
+        }
+
+        auto rel = p_rel->second;
+
+        for (auto& i: Books) {
+            string name = load(dump(i["name"])).s();
+
             if (name.find(key) != std::string::npos) {
-                ret.append(crow::json::dump(i));
-                ret.append(", ");
+
+                int index = (int)load(dump(i["index"])).i();
+                ret[count] = load(dump(i));
+
+                auto p = rel.find(index);
+                if (p != rel.end()) {
+                    ret[count]["borrowed"] = p->second;
+                    cerr << p->second << endl;
+                    cerr << "right branch" << endl;
+                }
+                else {
+                    ret[count]["borrowed"] = false;
+                }
+
+                count ++;
             }
         }
-        ret.erase(ret.length() - 2, ret.length());
-        ret.append("]");
         return std::move(ret);
+    }
+}
+
+namespace BorrowAndReturn {
+
+    bool borrowBook(std::string username, int index) {
+        auto rit = relations.find(username);
+        if (rit == relations.end()){
+            auto r_pair = relations.emplace(username, std::move(relation()));
+            rit = std::move(r_pair.first);
+        }
+        auto bit = rit->second.find(index);
+        if (bit == rit->second.end()){
+            auto r_pair = rit->second.emplace(index, 1);
+            // record not exists
+            return true;
+        }
+        else {
+            // if you hvae borrowed the book
+            if (bit->second == true)
+                return false;
+            // normal case
+            else {
+                bit->second = true;
+                return false;
+            }
+        }
+    }
+
+    bool returnBook(std::string username, int index) {
+        auto rit = relations.find(username);
+        if (rit == relations.end()){
+            auto r_pair = relations.emplace(username, std::move(relation()));
+            rit = std::move(r_pair.first);
+        }
+        auto bit = rit->second.find(index);
+        if (bit == rit->second.end()){
+            auto r_pair = rit->second.emplace(index, 0);
+            // record not exists
+            return true;
+        }
+        else {
+            // if you have returned the book
+            if (bit->second == false)
+                return false;
+            // normal case
+            else {
+                bit->second = false;
+                return true;
+            }
+        }
     }
 }
 
@@ -311,10 +396,12 @@ int main() {
                 cerr << req.middleware_context << endl;
             }
             else {
+                res.code = 403;
                 res.end("wrong username or password");
             }
         }
         else {
+            res.code = 403;
             res.end("wrong username or password");
         }
         res.end("login successfully");
@@ -375,6 +462,28 @@ int main() {
                .methods("GET"_method)
     ([](const crow::request & req, crow::response & res){
 
+        using crow::json::dump;
+        using crow::json::load;
+
+        auto *context =
+                static_cast<
+                        crow::detail::partial_context
+                                <
+                                        crow::CookieParser,
+                                        CookieManager::CookieManagerMiddleware,
+                                        SessionManager::SessionMiddleware,
+                                        UserManager::UserManagerMiddleware
+                                >*
+                        >(req.middleware_context);
+        auto session_middlerware = context->get<SessionManager::SessionMiddleware>();
+        string username;
+        try {
+            username = std::move(load(dump(session_middlerware.get_value("username"))).s());
+        }
+        catch (std::runtime_error) {
+            username = "anonymous";
+        }
+
         // get query_string
         auto bookname_json = req.url_params.get("bookname");
         string bookname;
@@ -384,8 +493,8 @@ int main() {
         else {
             bookname = bookname_json;
         }
-        cerr << Library::load(bookname) << endl;
-        res.end(Library::load(bookname));
+        auto books = Library::load(bookname, username);
+        res.end(crow::json::dump(books));
     });
 
 
@@ -396,13 +505,7 @@ int main() {
     ([](const crow::request & req, crow::response & res){
 
         // get req body
-        auto book = crow::json::load(req.body);
-        string name = crow::json::dump(book["name"]);
-        name = name.substr(1, name.length() - 2);
-        string image = crow::json::dump(book["image"]);
-        image = image.substr(1, name.length() - 2);
-        string description = crow::json::dump(book["description"]);
-        description.substr(1, description.length() - 2);
+        crow::json::wvalue book = crow::json::load(req.body);
 
         // check the request is sent from admin
         auto *context =
@@ -420,7 +523,9 @@ int main() {
         cerr << user.second << endl;
         cerr << user.first << endl;
         if (user.second == 0) {
-            Library::Books.push_back(book);
+            book["index"] = Library::primary_key_count;
+            ++Library::primary_key_count;
+            Library::Books.push_back(std::move(book));
             res.end("post succesfully");
         }
         else {
@@ -428,6 +533,109 @@ int main() {
         }
     });
 
+    CROW_ROUTE(app, "/api/borrow")
+               .methods("POST"_method)
+    ([](const crow::request &req, crow::response & res){
+
+        using crow::json::load;
+        using crow::json::dump;
+
+        auto book_json = crow::json::load(req.body);
+        auto book_index = std::move(atoi(crow::json::dump(book_json["index"]).c_str()));
+        cerr << book_index << endl;
+        auto *context =
+                static_cast<
+                        crow::detail::partial_context
+                                <
+                                        crow::CookieParser,
+                                        CookieManager::CookieManagerMiddleware,
+                                        SessionManager::SessionMiddleware,
+                                        UserManager::UserManagerMiddleware
+                                >*
+                        >(req.middleware_context);
+        auto session_middlerware = context->get<SessionManager::SessionMiddleware>();
+        string username;
+        try {
+            username = std::move(load(dump(session_middlerware.get_value("username"))).s());
+        }
+        catch (std::runtime_error) {
+            res.code = 403;
+            res.end("Login first!");
+        }
+        if (BorrowAndReturn::borrowBook(username, book_index)){
+            res.end("Success!");
+        }
+        else {
+            res.end("You have borrowed this book!");
+        }
+
+    });
+
+    CROW_ROUTE(app, "/api/return")
+            .methods("POST"_method)
+    ([](const crow::request &req, crow::response & res){
+
+        using crow::json::load;
+        using crow::json::dump;
+
+        auto book_json = crow::json::load(req.body);
+        auto book_index = std::move(atoi(crow::json::dump(book_json["index"]).c_str()));
+        auto *context =
+                static_cast<
+                        crow::detail::partial_context
+                                <
+                                        crow::CookieParser,
+                                        CookieManager::CookieManagerMiddleware,
+                                        SessionManager::SessionMiddleware,
+                                        UserManager::UserManagerMiddleware
+                                >*
+                        >(req.middleware_context);
+        auto session_middlerware = context->get<SessionManager::SessionMiddleware>();
+        string username;
+        try {
+            username = std::move(load(dump(session_middlerware.get_value("username"))).s());
+        }
+        catch (std::runtime_error) {
+            res.code = 403;
+            res.end("Login first!");
+        }
+        if (BorrowAndReturn::returnBook(username, book_index)){
+            res.end("Success!");
+        }
+        else {
+            res.end("You didn't borrow this book!");
+        }
+    });
+
+    CROW_ROUTE(app, "/api/is_login")
+            .methods("POST"_method)
+    ([](const crow::request &req, crow::response & res){
+
+        using crow::json::load;
+        using crow::json::dump;
+
+        auto *context =
+                static_cast<
+                        crow::detail::partial_context
+                                <
+                                        crow::CookieParser,
+                                        CookieManager::CookieManagerMiddleware,
+                                        SessionManager::SessionMiddleware,
+                                        UserManager::UserManagerMiddleware
+                                >*
+                        >(req.middleware_context);
+        auto session_middlerware = context->get<SessionManager::SessionMiddleware>();
+        string username;
+        cerr << "here" << endl;
+        try {
+            username = std::move(load(dump(session_middlerware.get_value("username"))).s());
+            res.end();
+        }
+        catch (std::runtime_error) {
+            res.code = 403;
+            res.end("Login first!");
+        }
+    });
 
     /*
      *  set admin
@@ -442,6 +650,7 @@ int main() {
     Library::Books.push_back(crow::json::load("{\"index\": 1, \"name\": \"javascript the good part\", \"image\": \"./media/book2.jpg\", \"description\": \"Strongly Suggest that every javascript coder should read it!\", \"borrowed\": false}"));
     Library::Books.push_back(crow::json::load("{\"index\": 2, \"name\": \"javascript\", \"image\": \"./media/book3.jpg\", \"description\": \"Include the bad part of javascript\", \"borrowed\": false}"));
     Library::Books.push_back(crow::json::load("{\"index\": 3, \"name\": \"我的青春恋爱物语果然有问题\", \"image\": \"./media/book4.jpg\", \"description\": \"高端后宫玩家\", \"borrowed\": false}"));
+    Library::primary_key_count = 3;
 
     app.port(8964)
             .multithreaded()
