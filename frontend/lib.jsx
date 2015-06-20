@@ -381,34 +381,23 @@ var DisplayBoard = React.createClass({
                 setTimeout(function() {
                     toBeDelete.css("position", "absolute");
                 }, 0);
-                var toBeDeleteOpacity = 1;
-                var toBeDeleteHandle = setInterval(function(){
-                    toBeDeleteOpacity -= 0.01;
-                    toBeDelete.css("opacity", toBeDeleteOpacity);
-                    if (toBeDelete <= 0)
-                        clearInterval(toBeDeleteHandle);
-                }, 10);
+                setTimeout(function() {
+                    toBeDelete.css("transition", "opacity .5s ease").css("opacity", 0);
+                });
 
                 var moveUpElement = $(".book"+(index+1));
                 // if not null
                 if (moveUpElement.length > 0) {
-                    console.log(123);
+
                     // init
-                    var stdMarginTop = parseFloat(moveUpElement.css("margin-top"));
+                    var stdMarginTop = parseFloat(toBeDelete.css("margin-top"));
                     var stdHeight = parseFloat(toBeDelete.css("height"));
                     var nowMarginTop = stdMarginTop * 2 + stdHeight;
                     moveUpElement.css("margin-top", nowMarginTop);
-                    var delta = (stdMarginTop + stdHeight) / 100;
-                    console.log(delta);
 
-                    var moveUpElementHandle = setInterval(function(){
-                        nowMarginTop -= delta;
-                        moveUpElement.css("margin-top", nowMarginTop);
-                        if (nowMarginTop <= stdMarginTop) {
-                            moveUpElement.css("margin-top", stdMarginTop);
-                            clearInterval(moveUpElementHandle);
-                        }
-                    }, 10);
+                    setTimeout(function() {
+                        moveUpElement.css("transition", "margin-top .5s ease").css("margin-top", stdMarginTop);
+                    }, 0);
                 }
 
                 setTimeout(function() {
