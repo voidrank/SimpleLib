@@ -523,8 +523,8 @@ int main() {
         cerr << user.second << endl;
         cerr << user.first << endl;
         if (user.second == 0) {
-            book["index"] = Library::primary_key_count;
             ++Library::primary_key_count;
+            book["index"] = Library::primary_key_count;
             Library::Books.push_back(std::move(book));
             res.end("post succesfully");
         }

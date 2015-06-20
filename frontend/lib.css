@@ -76,6 +76,7 @@ body {
     height: 2.2em;
     align-self: center;
     right: 1em;
+    margin-right: 1em;
 
     display: flex;
     justify-content: space-around;
@@ -147,7 +148,7 @@ body {
 
 }
 
-.login,.register {
+.login, .register, .add-book {
 
     position: fixed;
     margin: auto;
@@ -168,19 +169,28 @@ body {
     justify-content: space-around;
     flex-flow: column;
 }
+.register, .add-book {
+    height: 25em;
+}
 
-.login .closelabel, .register .closelabel {
+@media (max-width: 600px) {
+    .login, .register, .add-book {
+        top: 14em;
+    }
+}
+
+.login .closelabel, .register .closelabel, .add-book .closelabel {
     align-self: flex-end;
     margin-right: 1em;
     cursor: pointer;
     opacity: 0.5;
 }
 
-.login .closelabel, .register .closelabel:hover {
+.login .closelabel, .register .closelabel:hover, .add-book .closelabel {
     opacity: 1;
 }
 
-.login >input,.register >input {
+.login >input, .register >input, .add-book > input {
 
 
     border-radius: 0.5em;
@@ -195,17 +205,18 @@ body {
     background-image: url('./media/ban.png');
 }
 
-.login .submit, .register .submit {
+.login > button, .register > button, .add-book > button {
 
-    align-self: flex-end;
-
-    width: 5em;
-    height: 2em;
-
-    margin-right: 8em;
     border-radius: 0.3em;
     border: 1px solid #60b044;
+    margin-bottom: 2em;
     outline: 0;
+
+    align-self: center;
+
+    width: 50%;
+    height: 2.7em;
+
     background-color: #8add6d;
     background-image: linear-gradient(#8add6d, #60b044);
     cursor: pointer;
@@ -218,11 +229,13 @@ body {
     color: #fff;
 }
 
-.login .submit:hover, .register .submit:hover {
+.login > button:hover, .register > button:hover, .add-book > button:hover {
     background-image: linear-gradient(#60b044, #60b044);
 }
 
-.login .text, .register .text {
+.login .text, .register .text, .add-book .text {
+
+    margin-top: -1em;
 
     width: 100%;
     height: 2em;
@@ -249,7 +262,7 @@ body {
     display: -webkit-flex;
     display: flex;
     align-items: flex-start;
-    justify-content: space-around;
+    justify-content: space-between;
     z-index: 1000;
 }
 
@@ -273,6 +286,7 @@ body {
     padding: 0em 0.5em 0em 0.5em;
 }
 
+
 .header .logo {
 
     display: inline-flex;
@@ -280,32 +294,85 @@ body {
     margin-left: 0.3em;
     margin-right: 2em;
 
-    justify-content: center;
     justify-self: center;
     align-self: center;
 
     font-weight: 900;
     font-size: 2em;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header .logo > img {
+    margin-left 1em;
+    width: 2em;
+}
+
+.header .logo .logo-text {
+    display: inline-block;
+    margin-left: 0.5em;
 }
 
 @media (max-width: 600px) {
     .header {
+        position: relative;
         flex-direction: column;
         align-items: center;
+        justify-content: space-between;
         height: 12em;
+    }
+
+    .display-board {
+        padding-top: 0;
     }
 
     .header .logo {
         margin-left: 0;
         margin-right: 0;
+
+        justify-content: center;
         width: 100%;
+    }
+
+    .header .logo .logo-text {
+        font-size: 1.5em;
+    }
+
+    .header .logo > img {
+        display: none!important;
     }
 
     .header .search-bar {
-        width: 100%;
+        width: 95%;
     }
 
     .login-register {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        flex-direction: column;
+        width: 100%;
+        height: 4em;
+        margin: 0.5em 0 0.5em 0;
+    }
+
+    .login-register #logoutButton {
+        width: 95%;
+        height: 4em;
+    }
+    .login-register #loginButton {
+        width: 95%;
+        height: 4em;
+    }
+    .login-register #addBook {
+        width: 95%;
+        height: 4em;
+    }
+    .login-register #registerButton {
+        width: 95%;
+        height: 4em;
     }
 }
 
@@ -326,7 +393,7 @@ body {
 
 @media (max-width: 600px) {
     .display-board {
-        padding: 8em 0 0 0;
+        padding: 0 0.5em 0 0.5em;
     }
 
     li {

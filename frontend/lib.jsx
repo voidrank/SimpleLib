@@ -203,18 +203,38 @@ var LoginRegister = React.createClass({
 
     login: function () {
         $(MessageListener).trigger("deactivateRegister");
+        $(MessageListener).trigger("deactivateAddBook");
         $(MessageListener).trigger("activateLogin");
         $(".mask").removeClass("hidden");
     },
 
     register: function () {
         $(MessageListener).trigger("deactivateLogin");
+        $(MessageListener).trigger("deactivateAddBook");
         $(MessageListener).trigger("activateRegister");
         $(".mask").removeClass("hidden");
     },
 
+    addBook: function() {
+        $(MessageListener).trigger("deactivateLogin");
+        $(MessageListener).trigger("activateAddBook");
+        $(MessageListener).trigger("deactivateRegister");
+        $(".mask").removeClass("hidden");
+    },
+
     logout: function() {
-        $(MessageListener).trigger("loggedout");
+        $.ajax({
+            url: "http://" + window.location.hostname + ":8964/api/logout",
+            method: "POST",
+            crossDomain: true,
+            xhrFields: {
+                withCredentials: true
+            }
+        }).then(function(result) {
+            $(MessageListener).trigger("loggedout");
+        }, function(result) {
+            alert(result.responseText);
+        });
     },
 
     render: function () {
@@ -256,6 +276,15 @@ var DisplayBoard = React.createClass({
             var library = self.state.Books;
             library[index].borrowed = false;
             self.setState({books: library});
+        });
+
+        $(MessageListener).on("AddedBook", function(e, book) {
+            var library = self.state.Books;
+            book.index = library.length;
+            library.push(book);
+            self.setState({
+                Books: library
+            });
         });
     },
 
@@ -337,7 +366,10 @@ var DisplayBoard = React.createClass({
         return (
             <div>
                 <div className="header">
-                    <div className="logo">SimpleLibrary</div>
+                    <div className="logo">
+                        <img src="./media/logo.png" />
+                        <div className="logo-text">SimpleLibrary</div>
+                    </div>
                     <input
                         className="search-bar"
                         type="search"
@@ -399,6 +431,96 @@ var DisplayBoard = React.createClass({
 
 React.render(<DisplayBoard />, document.getElementsByClassName("search-widget")[0]);
 
+var AddBook = React.createClass({
+
+    getInitialState: function() {
+        return {
+            name: "",
+            description: "",
+            image: "",
+            visible: "hidden"
+        }
+    },
+
+    componentDidMount: function() {
+        var self = this;
+        $(MessageListener).on("activateAddBook", function(){
+            $(".mask").removeClass("hidden");
+            self.setState({
+                visible: ""
+            });
+            setTimeout(function() {
+                $("input[name=book-name]").focus();
+            });
+        });
+
+        $(MessageListener).on("deactivateAddBook", function(){
+            $(".mask").addClass("hidden");
+            self.setState({
+                visible: "hidden"
+            });
+        })
+    },
+
+    nameChange: function(l) {
+        this.setState({name: l.target.value});
+    },
+
+    descriptionChange: function(l) {
+        this.setState({description: l.target.value});
+    },
+
+    imageChange: function(l) {
+        this.setState({image: l.target.value});
+    },
+
+    submit: function() {
+        var self = this;
+        $.ajax({
+            url: "http://" + window.location.hostname + ":8964/api/set",
+            method: "POST",
+            crossDomain: true,
+            xhrFields: {
+                withCredentials: true
+            },
+            data: JSON.stringify({
+                name: this.state.name,
+                description: this.state.description,
+                image: this.state.image
+            })
+        }).then(function(e){
+            alert(e);
+            $(MessageListener).trigger("deactivateAddBook");
+            $(MessageListener).trigger("AddedBook", {
+                name: self.state.name,
+                description: self.state.description,
+                image: self.state.image,
+                borrowed: false
+            });
+        }, function(e){
+            alert(e);
+        });
+    },
+
+    render: function() {
+        var classString = "add-book " + this.state.visible;
+        return (
+            <div className={classString} >
+                <img src="./media/closelabel.png" className="closelabel"
+                     onClick={function(){$(MessageListener).trigger("deactivateAddBook")}}/>
+                <span className="text">ADD BOOK</span>
+                <input name="book-name" value={this.state.name} onChange={this.nameChange} placeholder="name" required />
+                <input name="book-description" value={this.state.description} onChange={this.descriptionChange} placeholder="description" required />
+                <input name="book-image" value={this.state.image} onChange={this.imageChange} className="addBook-lastInput" placeholder="image link" />
+                <button onClick={this.submit} id="add-book-submit" >ADD</button>
+            </div>
+        );
+
+    }
+});
+
+React.render(<AddBook />, document.getElementsByClassName("addBook-place-holder")[0]);
+
 
 // check login
 $.ajax({
@@ -415,6 +537,7 @@ $.ajax({
 });
 
 $(function(){
+
     $(".login-lastInput").on("keydown", function(e){
         if (e.keyCode === 13) {
             setTimeout(function(){
@@ -422,11 +545,20 @@ $(function(){
             }, 10);
         }
     });
+
     $(".register-lastInput").on("keydown", function(e){
         if (e.keyCode === 13) {
             setTimeout(function() {
                 $("#register-submit").click();
             }, 10);
+        }
+    });
+
+    $(".addBook-lastInput").on("keydown", function(e){
+        if (e.keyCode === 13) {
+            setTimeout(function() {
+                $("#add-book-submit").click();
+            });
         }
     });
 });
