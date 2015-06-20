@@ -544,6 +544,7 @@ var AddBook = React.createClass({
             name: "",
             description: "",
             image: "",
+            count: 0,
             visible: "hidden"
         }
     },
@@ -580,6 +581,16 @@ var AddBook = React.createClass({
         this.setState({image: l.target.value});
     },
 
+    countChange: function(l) {
+        var self = this;
+        if (isNaN(parseInt(l.target.value))) {
+            setTimeout(function () {
+                self.setState({count: 0});
+            }, 0);
+        }
+        this.setState({count: parseInt(l.target.value)});
+    },
+
     submit: function() {
         var self = this;
         $.ajax({
@@ -592,17 +603,13 @@ var AddBook = React.createClass({
             data: JSON.stringify({
                 name: this.state.name,
                 description: this.state.description,
-                image: this.state.image
+                image: this.state.image,
+                rest: parseInt(this.state.count),
             })
         }).then(function(e){
             alert(e);
             $(MessageListener).trigger("deactivateAddBook");
-            $(MessageListener).trigger("AddedBook", {
-                name: self.state.name,
-                description: self.state.description,
-                image: self.state.image,
-                borrowed: false
-            });
+            $(MessageListener).trigger("init");
         }, function(e){
             alert(e);
         });
@@ -617,7 +624,8 @@ var AddBook = React.createClass({
                 <span className="text">ADD BOOK</span>
                 <input name="book-name" value={this.state.name} onChange={this.nameChange} placeholder="name" required />
                 <input name="book-description" value={this.state.description} onChange={this.descriptionChange} placeholder="description" required />
-                <input name="book-image" value={this.state.image} onChange={this.imageChange} className="addBook-lastInput" placeholder="image link" />
+                <input name="book-image" value={this.state.image} onChange={this.imageChange} placeholder="image link" />
+                <input name="book-count" value={this.state.count} onChange={this.countChange} className="addBook-lastInput"  placeholder="book count" required />
                 <button onClick={this.submit} id="add-book-submit" >ADD</button>
             </div>
         );
