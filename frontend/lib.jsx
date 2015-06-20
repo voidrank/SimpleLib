@@ -52,6 +52,7 @@ var LoginWidget = React.createClass({
             alert(result);
             $(MessageListener).trigger("deactivateLogin");
             $(MessageListener).trigger("loggedin");
+            $(MessageListener).trigger("check_admin");
         }, function(result){
             alert(result.responseText);
             self.setState({username: "", password: ""});
@@ -188,7 +189,7 @@ React.render(<RegisterWidget />, document.getElementsByClassName("register-place
 var LoginRegister = React.createClass({
 
     getInitialState: function() {
-        return {loggedin: false};
+        return {loggedin: false, is_admin: false};
     },
 
     componentDidMount: function() {
@@ -198,6 +199,9 @@ var LoginRegister = React.createClass({
         });
         $(MessageListener).on("loggedout", function(){
             self.setState({"loggedin": false});
+        });
+        $(MessageListener).on("is_admin", function(){
+            self.setState({"is_admin": true});
         });
     },
 
@@ -243,7 +247,7 @@ var LoginRegister = React.createClass({
             <div className="login-register {}">
                 <a id="loginButton" onClick={this.login} className={(this.state.loggedin===false) ? "" : "hidden"}>Sign in</a>
                 <a id="registerButton" onClick={this.register} className={(this.state.loggedin===false) ? "": "hidden"}>Sign up</a>
-                <a id="addBook" onClick={this.addBook} className={(this.state.loggedin===false) ? "hidden" : ""} >Add Book </a>
+                <a id="addBook" onClick={this.addBook} className={(this.state.loggedin===false|| this.state.is_admin===false) ? "hidden" : ""} >Add Book </a>
                 <a id="logoutButton" onClick={this.logout} className={(this.state.loggedin===false) ? "hidden": ""}>Sign Out</a>
             </div>
         );
@@ -275,7 +279,7 @@ var DisplayBoard = React.createClass({
         $(MessageListener).on("return", function (e, index) {
             var library = self.state.Books;
             library[index].borrowed = false;
-            self.setState({books: library});
+            self.setState({Books: library});
         });
 
         $(MessageListener).on("AddedBook", function(e, book) {
@@ -286,6 +290,10 @@ var DisplayBoard = React.createClass({
                 Books: library
             });
         });
+
+        $(MessageListener).on("is_admin", function(){
+            self.setState({is_admin: true});
+        });
     },
 
     getInitialState: function () {
@@ -293,7 +301,8 @@ var DisplayBoard = React.createClass({
 
         return {
             searchString: searchString,
-            Books: []
+            Books: [],
+            is_admin: false
         };
     },
 
@@ -345,6 +354,35 @@ var DisplayBoard = React.createClass({
         );
     },
 
+    deleteBook: function(index) {
+
+        var self = this;
+        console.log(index);
+
+        $.ajax({
+            url: "http://" + window.location.hostname + ":8964/api/delete",
+            method: "POST",
+            data: JSON.stringify({
+                index: index
+            }),
+            crossDomain: true,
+            xhrFields: {
+                withCredentials: true
+            }
+        }).then(function (e) {
+                alert(e);
+                var library = self.state.Books;
+                for (var i = 0; i < library.length; ++i)
+                    if (library[i].index === index)
+                        library.splice(i, 1);
+                self.setState({Books: library});
+            },
+            function(e) {
+                alert(e.responseText);
+            }
+        );
+    },
+
     render: function () {
 
         var libraries = this.state.Books;
@@ -362,6 +400,9 @@ var DisplayBoard = React.createClass({
         }
 
         var self = this;
+        var deleteLabelClass = "book-delete ";
+        if (self.state.is_admin === false)
+            deleteLabelClass += "hidden";
 
         return (
             <div>
@@ -399,6 +440,7 @@ var DisplayBoard = React.createClass({
                                             }
                                         </div>
                                         <div className="book-description">{book.description}</div>
+                                        <img src="./media/closelabel.png" className={deleteLabelClass} onClick={self.deleteBook.bind(self, book["index"])} />
                                     </li>
                                 );
                             })
@@ -523,18 +565,25 @@ React.render(<AddBook />, document.getElementsByClassName("addBook-place-holder"
 
 
 // check login
-$.ajax({
-    url: "http://" + window.location.hostname + ":8964/api/is_login",
-    method: "POST",
-    crossDomain: true,
-    xhrFields: {
-        withCredentials: true
-    }
-}).then(function(e){
-    $(MessageListener).trigger("loggedin");
-}, function(e){
-    $(MessageListener).trigger("loggedout");
+$(MessageListener).on("check_admin", function() {
+    $.ajax({
+        url: "http://" + window.location.hostname + ":8964/api/is_login",
+        method: "POST",
+        crossDomain: true,
+        xhrFields: {
+            withCredentials: true
+        }
+    }).then(function (e) {
+        $(MessageListener).trigger("loggedin");
+        if (e === '0')
+            $(MessageListener).trigger("is_admin");
+    }, function (e) {
+        $(MessageListener).trigger("loggedout");
+    });
 });
+
+$(MessageListener).trigger("check_admin");
+
 
 $(function(){
 

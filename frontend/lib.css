@@ -511,3 +511,22 @@ body {
     display: -webkit-flex;
     display: flex;
 }
+
+.display-board .book .book-delete {
+    
+    align-self: flex-start;
+    
+    margin-right: 0.2em;
+    margin-top: 0.2em;
+
+    cursor: pointer;
+    
+    width: 2em;
+    height: auto;
+
+    opacity: 0.3;
+}
+
+.display-board .book .book-delete:hover {
+    opacity: 1;
+}

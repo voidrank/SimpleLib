@@ -533,6 +533,8 @@ int main() {
         }
     });
 
+
+
     CROW_ROUTE(app, "/api/borrow")
                .methods("POST"_method)
     ([](const crow::request &req, crow::response & res){
@@ -571,6 +573,7 @@ int main() {
 
     });
 
+
     CROW_ROUTE(app, "/api/return")
             .methods("POST"_method)
     ([](const crow::request &req, crow::response & res){
@@ -607,6 +610,59 @@ int main() {
         }
     });
 
+
+
+    CROW_ROUTE(app, "/api/delete")
+            .methods("POST"_method)
+    ([](const crow::request &req, crow::response & res){
+
+        using crow::json::load;
+        using crow::json::dump;
+
+        auto book_json = crow::json::load(req.body);
+        auto book_index = std::move(atoi(crow::json::dump(book_json["index"]).c_str()));
+        cerr << book_index << endl;
+        auto *context =
+                static_cast<
+                        crow::detail::partial_context
+                                <
+                                        crow::CookieParser,
+                                        CookieManager::CookieManagerMiddleware,
+                                        SessionManager::SessionMiddleware,
+                                        UserManager::UserManagerMiddleware
+                                >*
+                        >(req.middleware_context);
+        auto session_middlerware = context->get<SessionManager::SessionMiddleware>();
+        string username;
+        try {
+            username = std::move(load(dump(session_middlerware.get_value("username"))).s());
+        }
+        catch (std::runtime_error) {
+            res.code = 403;
+            res.end("Login first!");
+        }
+        auto user_middleware = context->get<UserManager::UserManagerMiddleware>();
+        auto user = user_middleware.get_user();
+        auto auth = user.second;
+        if (auth != 0) {
+            res.end("You aren't the admin.");
+        }
+        else {
+            using Library::Books;
+            using crow::json::load;
+            using crow::json::dump;
+            for (auto i = Books.begin(); i != Books.end(); ++i)
+                if (load(dump((*i)["index"])).i() == book_index) {
+                    Books.erase(i);
+                    break;
+                }
+            res.end("Success!");
+        }
+
+    });
+
+
+
     CROW_ROUTE(app, "/api/is_login")
             .methods("POST"_method)
     ([](const crow::request &req, crow::response & res){
@@ -624,12 +680,15 @@ int main() {
                                         UserManager::UserManagerMiddleware
                                 >*
                         >(req.middleware_context);
-        auto session_middlerware = context->get<SessionManager::SessionMiddleware>();
+        auto session_middleware = context->get<SessionManager::SessionMiddleware>();
+        auto user_middleware = context->get<UserManager::UserManagerMiddleware>();
         string username;
         cerr << "here" << endl;
         try {
-            username = std::move(load(dump(session_middlerware.get_value("username"))).s());
-            res.end();
+            username = std::move(load(dump(session_middleware.get_value("username"))).s());
+            auto user_middleware = context->get<UserManager::UserManagerMiddleware>();
+            auto user = user_middleware.get_user();
+            res.end(std::to_string(user.second));
         }
         catch (std::runtime_error) {
             res.code = 403;
