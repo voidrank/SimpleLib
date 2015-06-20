@@ -354,7 +354,7 @@ var DisplayBoard = React.createClass({
         );
     },
 
-    deleteBook: function(index) {
+    deleteBook: function(pk, index) {
 
         var self = this;
         console.log(index);
@@ -363,7 +363,7 @@ var DisplayBoard = React.createClass({
             url: "http://" + window.location.hostname + ":8964/api/delete",
             method: "POST",
             data: JSON.stringify({
-                index: index
+                index: pk
             }),
             crossDomain: true,
             xhrFields: {
@@ -373,9 +373,47 @@ var DisplayBoard = React.createClass({
                 alert(e);
                 var library = self.state.Books;
                 for (var i = 0; i < library.length; ++i)
-                    if (library[i].index === index)
+                    if (library[i].index === pk)
                         library.splice(i, 1);
-                self.setState({Books: library});
+
+                // to fade out
+                var toBeDelete = $(".book"+index);
+                setTimeout(function() {
+                    toBeDelete.css("position", "absolute");
+                }, 0);
+                var toBeDeleteOpacity = 1;
+                var toBeDeleteHandle = setInterval(function(){
+                    toBeDeleteOpacity -= 0.01;
+                    toBeDelete.css("opacity", toBeDeleteOpacity);
+                    if (toBeDelete <= 0)
+                        clearInterval(toBeDeleteHandle);
+                }, 10);
+
+                var moveUpElement = $(".book"+(index+1));
+                // if not null
+                if (moveUpElement.length > 0) {
+                    console.log(123);
+                    // init
+                    var stdMarginTop = parseFloat(moveUpElement.css("margin-top"));
+                    var stdHeight = parseFloat(toBeDelete.css("height"));
+                    var nowMarginTop = stdMarginTop * 2 + stdHeight;
+                    moveUpElement.css("margin-top", nowMarginTop);
+                    var delta = (stdMarginTop + stdHeight) / 100;
+                    console.log(delta);
+
+                    var moveUpElementHandle = setInterval(function(){
+                        nowMarginTop -= delta;
+                        moveUpElement.css("margin-top", nowMarginTop);
+                        if (nowMarginTop <= stdMarginTop) {
+                            moveUpElement.css("margin-top", stdMarginTop);
+                            clearInterval(moveUpElementHandle);
+                        }
+                    }, 10);
+                }
+
+                setTimeout(function() {
+                    self.setState({Books: library})
+                }, 1000);
             },
             function(e) {
                 alert(e.responseText);
@@ -424,8 +462,9 @@ var DisplayBoard = React.createClass({
                     <ul className="column">
                         {
                             libraries.map(function (book, index) {
+                                var bookClass = "book " + "book" + index;
                                 return (
-                                    <li className="book" key={book.index}>
+                                    <li className={bookClass} key={book.index}>
                                         <div className="book-image">
                                             <img src={book.image} className="book-image"/>
                                         </div>
@@ -440,7 +479,7 @@ var DisplayBoard = React.createClass({
                                             }
                                         </div>
                                         <div className="book-description">{book.description}</div>
-                                        <img src="./media/closelabel.png" className={deleteLabelClass} onClick={self.deleteBook.bind(self, book["index"])} />
+                                        <img src="./media/closelabel.png" className={deleteLabelClass} onClick={self.deleteBook.bind(self, book["index"], index)} />
                                     </li>
                                 );
                             })

@@ -386,6 +386,10 @@ body {
 }
 
 .display-board .column {
+    position: relative;
+}
+
+.display-board .column {
     display: flex;
     flex-direction: column;
     justify-content: space-around;
