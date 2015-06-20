@@ -27,7 +27,11 @@ var LoginWidget = React.createClass({
         $(MessageListener).on("deactivateLogin", function () {
             $(".mask").removeClass("mask-fade-in");
             $(".mask").addClass("hidden");
-            this.setState({display: "hidden"});
+            this.setState({
+                username: "",
+                password: "",
+                display: "hidden"
+            });
         }.bind(this));
     },
 
@@ -52,6 +56,7 @@ var LoginWidget = React.createClass({
             alert(result);
             $(MessageListener).trigger("deactivateLogin");
             $(MessageListener).trigger("loggedin");
+            $(MessageListener).trigger("init");
             $(MessageListener).trigger("check_admin");
         }, function(result){
             alert(result.responseText);
@@ -236,6 +241,7 @@ var LoginRegister = React.createClass({
             }
         }).then(function(result) {
             $(MessageListener).trigger("loggedout");
+            $(MessageListener).trigger("init");
         }, function(result) {
             alert(result.responseText);
         });
@@ -259,26 +265,30 @@ var DisplayBoard = React.createClass({
 
     componentDidMount(){
         var self = this;
-        $.ajax({
-            url: "http://" + window.location.hostname + ":8964/api/load",
-            crossDomain: true,
-            xhrFields: {
-                withCredentials: true
-            }
-        }).then(function (result) {
-            result = JSON.parse(result);
-            self.setState({Books: result});
+        $(MessageListener).on("init", function() {
+            $.ajax({
+                url: "http://" + window.location.hostname + ":8964/api/load",
+                crossDomain: true,
+                xhrFields: {
+                    withCredentials: true
+                }
+            }).then(function (result) {
+                result = JSON.parse(result);
+                self.setState({Books: result});
+            });
         });
 
         $(MessageListener).on("borrow", function (e, index) {
             var library = self.state.Books;
             library[index].borrowed = true;
+            --library[index].rest;
             self.setState({Books: library});
         });
 
         $(MessageListener).on("return", function (e, index) {
             var library = self.state.Books;
             library[index].borrowed = false;
+            ++library[index].rest;
             self.setState({Books: library});
         });
 
@@ -294,6 +304,17 @@ var DisplayBoard = React.createClass({
         $(MessageListener).on("is_admin", function(){
             self.setState({is_admin: true});
         });
+
+        $(MessageListener).on("loggedin", function() {
+            self.setState({loggedin: true});
+        });
+
+        $(MessageListener).on("loggedout", function() {
+            self.setState({
+                loggedin: false,
+                is_admin: false
+            });
+        });
     },
 
     getInitialState: function () {
@@ -302,7 +323,8 @@ var DisplayBoard = React.createClass({
         return {
             searchString: searchString,
             Books: [],
-            is_admin: false
+            is_admin: false,
+            loggedin: false
         };
     },
 
@@ -427,7 +449,7 @@ var DisplayBoard = React.createClass({
         }
 
         var self = this;
-        var deleteLabelClass = "book-delete ";
+        var deleteLabelClass = "";
         if (self.state.is_admin === false)
             deleteLabelClass += "hidden";
 
@@ -457,18 +479,32 @@ var DisplayBoard = React.createClass({
                                         <div className="book-image">
                                             <img src={book.image} className="book-image"/>
                                         </div>
-                                        <div className="book-title">
+                                        <div className="book-content">
                                             <span className="book-name">{book.name}</span>
-                                            {
-                                                book.borrowed ?
-                                                    <a className="glyphicon glyphicon-eject return"
-                                                       onClick={self.returnBook.bind(self, index)}>Return</a> :
-                                                    <a className="glyphicon glyphicon-plus borrow"
-                                                       onClick={self.borrow.bind(self, index)}>Borrow</a>
-                                            }
+                                            <div className="book-description">{book.description}</div>
+                                            <div className="book-operation-bar">
+                                                {(function(){
+                                                    if (self.state.loggedin === true) {
+                                                        if (book.borrowed)
+                                                            return (
+                                                                <a className="glyphicon glyphicon-eject return"
+                                                                   onClick={self.returnBook.bind(self, index)}>Return</a>);
+                                                        else
+                                                            return (
+                                                                <a className="glyphicon glyphicon-plus borrow"
+                                                                   onClick={self.borrow.bind(self, index)}>Borrow</a>);
+                                                    }
+                                                    else
+                                                        return
+                                                            <div/>
+
+                                                })()}
+                                                <span className="book-rest-count">REST: {book.rest}</span>
+                                            </div>
                                         </div>
-                                        <div className="book-description">{book.description}</div>
-                                        <img src="./media/closelabel.png" className={deleteLabelClass} onClick={self.deleteBook.bind(self, book["index"], index)} />
+                                        <div className="book-delete" >
+                                            <img src="./media/closelabel.png" className={deleteLabelClass} onClick={self.deleteBook.bind(self, book["index"], index)} />
+                                        </div>
                                     </li>
                                 );
                             })
@@ -610,8 +646,6 @@ $(MessageListener).on("check_admin", function() {
     });
 });
 
-$(MessageListener).trigger("check_admin");
-
 
 $(function(){
 
@@ -639,3 +673,8 @@ $(function(){
         }
     });
 });
+
+
+
+$(MessageListener).trigger("init");
+$(MessageListener).trigger("check_admin");

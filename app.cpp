@@ -286,6 +286,58 @@ namespace Library {
         }
         return std::move(ret);
     }
+
+    bool empty(const int& index) {
+
+        using crow::json::load;
+        using crow::json::dump;
+
+        for (auto& i:Books) {
+            if (load(dump(i["index"])).i() == index) {
+                if (load(dump(i["rest"])).i() > 0)
+                    return false;
+                else
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool borrow(const int & index) {
+        using crow::json::load;
+        using crow::json::dump;
+
+        for (auto& i:Books) {
+            if (load(dump(i["index"])).i() == index) {
+                cerr << "Book found" << endl;
+                if (load(dump(i["rest"])).i() > 0) {
+                    i["rest"] = load(dump(i["rest"])).i() - 1;
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    bool returnBook(const int & index) {
+
+        using crow::json::load;
+        using crow::json::dump;
+
+        for (auto& i:Books) {
+            if (load(dump(i["index"])).i() == index) {
+                i["rest"] = load(dump(i["rest"])).i() + 1;
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
 
 namespace BorrowAndReturn {
@@ -298,18 +350,31 @@ namespace BorrowAndReturn {
         }
         auto bit = rit->second.find(index);
         if (bit == rit->second.end()){
-            auto r_pair = rit->second.emplace(index, 1);
             // record not exists
-            return true;
+            // if not empty
+            if (Library::borrow(index)) {
+                auto r_pair = rit->second.emplace(index, 1);
+                return true;
+            }
+            else {
+                auto r_pair = rit->second.emplace(index, 0);
+                return false;
+            }
         }
         else {
             // if you hvae borrowed the book
             if (bit->second == true)
                 return false;
-            // normal case
             else {
-                bit->second = true;
-                return false;
+                // normal case
+                if (Library::borrow(index)) {
+                    bit->second = true;
+                    return true;
+                }
+                else {
+                    // there is no books rest
+                    return false;
+                }
             }
         }
     }
@@ -324,7 +389,7 @@ namespace BorrowAndReturn {
         if (bit == rit->second.end()){
             auto r_pair = rit->second.emplace(index, 0);
             // record not exists
-            return true;
+            return false;
         }
         else {
             // if you have returned the book
@@ -333,6 +398,7 @@ namespace BorrowAndReturn {
             // normal case
             else {
                 bit->second = false;
+                Library::returnBook(index);
                 return true;
             }
         }
@@ -568,7 +634,8 @@ int main() {
             res.end("Success!");
         }
         else {
-            res.end("You have borrowed this book!");
+            res.code = 403;
+            res.end("Wrong Borrow Operation");
         }
 
     });
@@ -705,10 +772,10 @@ int main() {
     /*
      * set initial library
      */
-    Library::Books.push_back(crow::json::load("{\"index\": 0, \"name\": \"ReactJS\", \"image\": \"./media/book1.jpg\", \"description\": \"The best way to code component UI I have seen.\", \"borrowed\": false}"));
-    Library::Books.push_back(crow::json::load("{\"index\": 1, \"name\": \"javascript the good part\", \"image\": \"./media/book2.jpg\", \"description\": \"Strongly Suggest that every javascript coder should read it!\", \"borrowed\": false}"));
-    Library::Books.push_back(crow::json::load("{\"index\": 2, \"name\": \"javascript\", \"image\": \"./media/book3.jpg\", \"description\": \"Include the bad part of javascript\", \"borrowed\": false}"));
-    Library::Books.push_back(crow::json::load("{\"index\": 3, \"name\": \"我的青春恋爱物语果然有问题\", \"image\": \"./media/book4.jpg\", \"description\": \"高端后宫玩家\", \"borrowed\": false}"));
+    Library::Books.push_back(crow::json::load("{\"index\": 0, \"name\": \"ReactJS\", \"image\": \"./media/book1.jpg\", \"description\": \"The best way to code component UI I have seen.\", \"borrowed\": false, \"rest\": 2}"));
+    Library::Books.push_back(crow::json::load("{\"index\": 1, \"name\": \"javascript the good part\", \"image\": \"./media/book2.jpg\", \"description\": \"Strongly Suggest that every javascript coder should read it!\", \"borrowed\": false, \"rest\": 2}"));
+    Library::Books.push_back(crow::json::load("{\"index\": 2, \"name\": \"javascript\", \"image\": \"./media/book3.jpg\", \"description\": \"Include the bad part of javascript\", \"borrowed\": false, \"rest\": 10}"));
+    Library::Books.push_back(crow::json::load("{\"index\": 3, \"name\": \"我的青春恋爱物语果然有问题\", \"image\": \"./media/book4.jpg\", \"description\": \"高端后宫玩家\", \"borrowed\": false, \"rest\": 1}"));
     Library::primary_key_count = 3;
 
     app.port(8964)
