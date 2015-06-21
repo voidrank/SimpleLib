@@ -125,6 +125,7 @@ var RegisterWidget = React.createClass({
     },
 
     submit: function () {
+
         if (this.state.password !== this.state.repeatPassword) {
             console.log(this.state.password);
             console.log(this.state.repeatPassword);
@@ -592,6 +593,12 @@ var AddBook = React.createClass({
     },
 
     submit: function() {
+
+        if (this.state.name === "") {
+            alert("Book Name required");
+            return;
+        }
+
         var self = this;
         $.ajax({
             url: "http://" + window.location.hostname + ":8964/api/set",
