@@ -1,6 +1,8 @@
 # SimpleLib
 
-2015 FDU C++ Final Project 
+2015 FDU C++ Final Project
+
+see: [demo](http://psycium.xyz/SimpleLib/Lib.html) 
 
 # Installation
 
