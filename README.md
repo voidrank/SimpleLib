@@ -68,8 +68,8 @@ Login
 > @data  JSON {"username": string, "password": string}
 
 Logout
-> @method post
-> @url /api/logout
+> @method post  
+> @url /api/logout  
 
 Register
 > @method post  
@@ -86,24 +86,24 @@ Load
 Set
 > @method get  
 > @url /api/set  
-> @data JSON book  
+> @data JSON book    
 > @description store a book (admin only)
 
 Borrow
-> @mothod post
-> @url /api/borrow
-> @data JSON {"index": number}
+> @mothod post  
+> @url /api/borrow  
+> @data JSON {"index": number}  
 
 Return
-> @method post
-> @url /api/return
-> @data JSON {"index": number}
+> @method post  
+> @url /api/return  
+> @data JSON {"index": number}  
 
 Delete
-> @method post
-> @url /api/delete
-> @data JSON {"index": number} 
-> @description admin only
+> @method post  
+> @url /api/delete  
+> @data JSON {"index": number}   
+> @description admin only  
 
 Is_login
 > @method post   
